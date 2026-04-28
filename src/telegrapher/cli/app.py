@@ -147,17 +147,35 @@ def download_model(
 
 @app.command(name="eval")
 def eval_cmd(  # name="eval" but function is `eval_cmd` to avoid shadowing builtin
-    corpus: Path = typer.Argument(..., help="Path to a corpus directory."),
+    corpus: Path = typer.Argument(..., help="Path to a corpus directory or file."),
     report: Path = typer.Option(Path("report.md"), "--report", help="Output report path."),
     level: str = LevelOpt,
     runner: str | None = RunnerOpt,
+    no_expand: bool = typer.Option(
+        False,
+        "--no-expand",
+        help="Skip the expand-back-to-NL check (faster, omits expanded ratio).",
+    ),
 ) -> None:
-    """Validate compression fidelity and ratio on a user-supplied corpus.
+    """Validate compression fidelity and ratio on a user-supplied corpus."""
+    if not corpus.exists():
+        typer.echo(f"Error: corpus path not found: {corpus}", err=True)
+        raise typer.Exit(code=1)
 
-    Phase 5 — implementation arrives with the `telegrapher.eval` module.
-    """
-    typer.echo(
-        "tg eval: not implemented yet — arrives in v0.1 Phase 5 with the eval module.",
-        err=True,
+    tg = _build_telegrapher(runner=runner)
+
+    from telegrapher.eval import validate
+
+    eval_report = validate(
+        corpus,
+        level=level,
+        telegrapher=tg,
+        expand_check=not no_expand,
+        report=report,
     )
-    raise typer.Exit(code=2)
+
+    typer.echo(
+        f"Evaluated {len(eval_report.documents)} document(s) at {level}; "
+        f"aggregate ratio {eval_report.aggregate_ratio:.2f}×. "
+        f"Report written to {report}."
+    )

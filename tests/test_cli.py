@@ -129,6 +129,56 @@ def test_download_model_failure_exits_1(tmp_path: Path) -> None:
 # -- eval (stub until Phase 5) ----------------------------------------------
 
 
-def test_eval_command_is_registered_but_not_implemented(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["eval", str(tmp_path)])
-    assert result.exit_code == 2
+def test_eval_command_runs_against_corpus(tmp_path: Path) -> None:
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    (corpus / "a.txt").write_text("alpha " * 100, encoding="utf-8")
+    (corpus / "b.md").write_text("beta " * 50, encoding="utf-8")
+    report_path = tmp_path / "report.md"
+
+    result = runner.invoke(
+        app,
+        [
+            "eval",
+            str(corpus),
+            "--report",
+            str(report_path),
+            "--level",
+            "L3",
+            "--runner",
+            "mock",
+        ],
+    )
+    assert result.exit_code == 0, result.stdout
+    assert report_path.exists()
+    assert "Telegrapher Evaluation Report" in report_path.read_text(encoding="utf-8")
+
+
+def test_eval_command_missing_corpus_exits_1(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app, ["eval", str(tmp_path / "missing"), "--runner", "mock"]
+    )
+    assert result.exit_code == 1
+
+
+def test_eval_command_no_expand_flag(tmp_path: Path) -> None:
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    (corpus / "a.txt").write_text("alpha " * 50, encoding="utf-8")
+    report_path = tmp_path / "report.md"
+    result = runner.invoke(
+        app,
+        [
+            "eval",
+            str(corpus),
+            "--report",
+            str(report_path),
+            "--no-expand",
+            "--runner",
+            "mock",
+        ],
+    )
+    assert result.exit_code == 0, result.stdout
+    text = report_path.read_text(encoding="utf-8")
+    # With --no-expand, the per-doc expanded columns are placeholders.
+    assert "—" in text
