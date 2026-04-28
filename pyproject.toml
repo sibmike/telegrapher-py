@@ -1,0 +1,132 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "telegrapher"
+description = "Compress your LLM memory locally. Bidirectional Natural Language ↔ Telegraph English with measured round-trip fidelity."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Telegrapher AI" },
+]
+keywords = ["llm", "compression", "memory", "rag", "telegraph-english"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+dynamic = ["version"]
+dependencies = [
+    "typer>=0.12",
+    "platformdirs>=4.0",
+    "huggingface-hub>=0.24",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+# v0.1 extras
+gpu = [
+    "torch>=2.2",
+    "transformers>=4.44",
+    "vllm>=0.5; platform_system != 'Windows'",
+]
+cpu = [
+    "llama-cpp-python>=0.2.80",
+]
+langchain = [
+    "langchain-core>=0.2",
+]
+# Dev tooling (not part of any user-facing extra)
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "build>=1.2",
+]
+all = [
+    "telegrapher[gpu,cpu,langchain]",
+]
+
+[project.scripts]
+tg = "telegrapher.cli:app"
+
+[project.urls]
+Homepage = "https://telegrapher.ai"
+Source = "https://github.com/telegrapher-ai/telegrapher_py"
+Issues = "https://github.com/telegrapher-ai/telegrapher_py/issues"
+
+[tool.hatch.version]
+path = "src/telegrapher/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/telegrapher"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long — handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B011"]  # allow assert False in tests
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/telegrapher"]
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["vllm.*", "llama_cpp.*", "transformers.*", "huggingface_hub.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests that require real model weights",
+]
+
+[tool.coverage.run]
+source = ["src/telegrapher"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
