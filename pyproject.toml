@@ -94,6 +94,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B011"]  # allow assert False in tests
+"src/telegrapher/cli/**" = ["B008"]  # Typer's documented pattern requires Option/Argument in defaults
 
 [tool.mypy]
 python_version = "3.10"
