@@ -9,6 +9,9 @@
 > **Source-of-truth note**
 > This plan was authored in plan-mode in the research repo (`C:\Users\mikea\SCRIPTS\telegrapher_ai`) and migrated here as the canonical design record for the `telegrapher_py` package. Module paths below use the `src/telegrapher/...` src-layout for this repo. Origin code that gets refactored lives at `..\telegrapher_ai\code\telegrapher\`.
 
+> **Amendment 2026-04-27 — LangChain BaseMemory adapter dropped from v0.1**
+> The Phase 4 LangChain `TelegrapherSummaryMemory` adapter described below was **removed** from v0.1 mid-implementation. `langchain_core 1.x` deleted `BaseMemory` in favour of LangGraph's checkpointer pattern, so any subclass adapter would be deprecated on the day it shipped. Decision: ship `ConversationCompactor` as a generic primitive in v0.1; framework adapters (LangChain checkpointer, LlamaIndex, Haystack, LiteLLM) become opt-in v0.2 integrations once we have signal on which one matters most. References to `telegrapher.integrations.langchain` and the `[langchain]` extra below are kept as the original design trace but no longer reflect what's shipping. See [PS-001](../product-specs/ps-001-memory-wedge.md) and [the active exec plan](../exec-plans/active/v0.1-memory-wedge.md) for the current surface.
+
 ## Context
 
 You have a working Telegraph English (TE) compression pipeline (paper draft v0.8): ~50% token reduction, ~99% key-fact preservation, 85–96% fine-fact preservation across LongBench-v2. Two trained **9B bidirectional SLMs** (NL ↔ TE) with a **compression-ratio toggle** (L1/L3/L5) are the new ingredient that wasn't in the research-repo `code/telegrapher/` package — that codebase still calls `gpt-4.1` / `o4-mini` for compression.

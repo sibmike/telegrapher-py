@@ -43,9 +43,6 @@ gpu = [
 cpu = [
     "llama-cpp-python>=0.2.80",
 ]
-langchain = [
-    "langchain-core>=0.2",
-]
 # Dev tooling (not part of any user-facing extra)
 dev = [
     "pytest>=8.0",
@@ -56,7 +53,7 @@ dev = [
     "build>=1.2",
 ]
 all = [
-    "telegrapher[gpu,cpu,langchain]",
+    "telegrapher[gpu,cpu]",
 ]
 
 [project.scripts]

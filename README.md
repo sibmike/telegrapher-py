@@ -24,13 +24,22 @@ te = tg.compress("Some long passage…", level="L3")
 nl = tg.expand(te)
 ```
 
-Drop-in memory compactor for LangChain:
+Token-budgeted conversation memory for chatbots and agents:
 
 ```python
 from telegrapher.memory import ConversationCompactor
 
 memory = ConversationCompactor(level="L3", max_tokens=4000)
+memory.add_user_message("Hello, what's my order number?")
+memory.add_ai_message("Your order is 1234.")
+# Old turns auto-compress to TE when the buffer overflows.
+for m in memory.messages():
+    print(f"{m.role}: {m.content}")
 ```
+
+`ConversationCompactor` exposes the standard memory verbs (`add_user_message`,
+`add_ai_message`, `messages`, `clear`, `token_count`) — wrap it in your
+framework's memory protocol if you need a strict typed adapter.
 
 Validate fidelity on your own corpus:
 

@@ -13,16 +13,16 @@ The v0.1 release is the first public PyPI cut of `telegrapher`. It leads with a 
 
 ## User stories
 
-### US-1 — Indie dev wires up persistent memory in a LangChain bot
+### US-1 — Indie dev wires up persistent memory in a chatbot
 
-> *As a Python developer building a customer support chatbot, I want a drop-in replacement for `ConversationSummaryMemory` that doesn't garble phone numbers and order IDs across long sessions.*
+> *As a Python developer building a customer support chatbot, I want a memory store that doesn't garble phone numbers and order IDs across long sessions, without forcing me to summarise turns away.*
 
 ```python
-from telegrapher.integrations.langchain import TelegrapherSummaryMemory
-memory = TelegrapherSummaryMemory(level="L3", max_tokens=4000)
+from telegrapher.memory import ConversationCompactor
+memory = ConversationCompactor(level="L3", max_tokens=4000)
 ```
 
-The dev should not need to think about model loading, weight downloads, GPU vs CPU, cache directories, or TE grammar. Two-line change from the LangChain default.
+The dev should not need to think about model loading, weight downloads, GPU vs CPU, cache directories, or TE grammar. `ConversationCompactor` exposes the standard memory verbs (`add_user_message`, `add_ai_message`, `messages`, `clear`); wrapping it in a framework-specific protocol (LangChain `BaseMemory`, LangGraph checkpointer, etc.) is one short adapter the user owns or pulls from a future v0.2 extras package.
 
 ### US-2 — ML engineer compresses raw text from the CLI
 
@@ -101,18 +101,11 @@ class ConversationCompactor:
     def clear(self) -> None: ...
 ```
 
-### `telegrapher.integrations.langchain`
+### Framework integrations
 
-```python
-class TelegrapherSummaryMemory(BaseMemory):
-    """Drop-in for langchain.memory.ConversationSummaryMemory.
+**Not in v0.1.** Originally PS-001 included a `TelegrapherSummaryMemory(BaseMemory)` LangChain adapter, but `langchain_core 1.x` removed `BaseMemory` and migrated to LangGraph's checkpointer pattern. Shipping a v0.1 adapter against the deprecated 0.x API would be dead-on-arrival.
 
-    Same constructor signature as ConversationCompactor; subclasses
-    LangChain's BaseMemory so frameworks can hold it natively.
-    """
-```
-
-This module imports from `langchain_core` lazily — installed only with `pip install telegrapher[langchain]`. Importing it without the extra raises `ImportError` with a clear install hint.
+The decision (2026-04-27) is to ship **`ConversationCompactor` as a generic primitive** and let users wrap it in their framework's memory protocol. Two extra lines of glue at the call site replace the framework lock-in. Framework adapters (LangChain checkpointer, LlamaIndex, Haystack) become opt-in v0.2 integrations once we have signal on which one matters most.
 
 ### `telegrapher.eval`
 
@@ -178,7 +171,7 @@ For v0.1 to ship:
 
 1. ✅ Package installs cleanly via `pip install telegrapher` in a fresh venv on Python 3.10, 3.11, 3.12.
 2. ✅ All public API methods listed above exist with the documented signatures.
-3. ✅ `tg --help` lists all five commands with one-line descriptions.
+3. ✅ `tg --help` lists `compress`, `expand`, `download-model`, `eval` with one-line descriptions.
 4. ✅ Smoke test: `Telegrapher().compress(s).expand(...)` round-trip on a fixture corpus achieves ≥ 95% QA fidelity on key facts at L3.
 5. ✅ Smoke test: `ConversationCompactor` with a 2k token budget compresses ≥ 2× when buffer overflows.
 6. ✅ Smoke test: `tg eval` on a 5-document fixture corpus runs to completion and writes a non-empty report.
@@ -186,6 +179,7 @@ For v0.1 to ship:
 8. ✅ `ruff check` and `mypy --strict` both clean.
 9. ✅ Round-trip fidelity tests use `MockRunner` with hand-curated NL ↔ TE pairs — no real model downloads in CI.
 10. ✅ Integration tests (`-m integration`) load real weights and round-trip; gated, not run in CI.
+11. ✅ No framework integrations (LangChain, LlamaIndex, etc.) ship in v0.1 — `ConversationCompactor` is the generic primitive.
 
 ## Out of scope for v0.1
 
