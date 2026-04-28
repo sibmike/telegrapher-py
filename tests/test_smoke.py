@@ -11,34 +11,41 @@ def test_package_imports() -> None:
     assert hasattr(telegrapher, "Telegrapher")
 
 
-def test_telegrapher_constructor_accepts_default() -> None:
+def test_telegrapher_constructs_with_mock_runner() -> None:
     from telegrapher import Telegrapher
 
-    Telegrapher()  # default constructor must succeed without arguments
+    Telegrapher(runner="mock")  # mock runner is bundled with core; always works
+
+
+def test_telegrapher_default_runner_raises_until_real_runners_implemented() -> None:
+    """Phase 1 contract: without an extras-provided runner installed,
+    constructing without `runner="mock"` raises a helpful InstallError."""
+    from telegrapher import Telegrapher
+    from telegrapher.core.backends import InstallError
+
+    with pytest.raises(InstallError):
+        Telegrapher()  # auto-pick fails until vLLM / llama-cpp are wired in Phase 6
 
 
 def test_telegrapher_rejects_mixed_model_args() -> None:
     from telegrapher import Telegrapher
 
     with pytest.raises(ValueError):
-        Telegrapher(model="org/te-bidi", model_in="org/te-compress", model_out="org/te-expand")
+        Telegrapher(
+            model="org/te-bidi",
+            model_in="org/te-compress",
+            model_out="org/te-expand",
+            runner="mock",
+        )
 
 
 def test_telegrapher_rejects_partial_unidirectional_args() -> None:
     from telegrapher import Telegrapher
 
     with pytest.raises(ValueError):
-        Telegrapher(model_in="org/te-compress")  # missing model_out
+        Telegrapher(model_in="org/te-compress", runner="mock")  # missing model_out
     with pytest.raises(ValueError):
-        Telegrapher(model_out="org/te-expand")  # missing model_in
-
-
-def test_compress_not_yet_implemented() -> None:
-    from telegrapher import Telegrapher
-
-    tg = Telegrapher()
-    with pytest.raises(NotImplementedError):
-        tg.compress("hello")
+        Telegrapher(model_out="org/te-expand", runner="mock")  # missing model_in
 
 
 def test_cli_entrypoint_registered() -> None:

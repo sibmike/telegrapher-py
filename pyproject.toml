@@ -30,6 +30,7 @@ dependencies = [
     "platformdirs>=4.0",
     "huggingface-hub>=0.24",
     "pydantic>=2.7",
+    "tiktoken>=0.7",
 ]
 
 [project.optional-dependencies]
